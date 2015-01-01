@@ -77,7 +77,10 @@ let updateIsDead (snake: Snake) =
     | (_, y) when y < 0 || y >= snd snake.size -> true
     | _ -> false
 
-    let hasSelfColision = Seq.compareWith Operators.compare (List.toSeq snake.location) (Seq.distinct snake.location) <> 0
+    let listSeq = List.toSeq snake.location
+    let distSeq = Seq.distinct snake.location
+    let compResult = Seq.compareWith Operators.compare listSeq distSeq
+    let hasSelfColision= compResult <> 0
 
     if hasBorderCollision || hasSelfColision
     then { snake with isAlive = false }
@@ -128,8 +131,8 @@ let main argv =
         |> ignore
 
         snake <- Console.ReadKey false 
-                 |> getMove 
-                 |> updateSnake snake
+        |> getMove 
+        |> updateSnake snake
 
     Console.WriteLine "You lose!" 
     Console.ReadKey false |> ignore
