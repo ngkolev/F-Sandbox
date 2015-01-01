@@ -27,7 +27,7 @@ let initSnake size = {
     direction = 0, -1
     size = size
     prize = getRandomPosition size
-    location = [(fst size / 2, (snd size) - 1)]
+    location = [(fst size / 2, (snd size) - 1); (fst size / 2, (snd size) - 2)]
     isAlive = true
     hasPrize = false
 };
@@ -63,8 +63,8 @@ let updateLocation (snake: Snake) =
     let l = snake.location
     let newHead = getNewHead snake
     if snake.hasPrize
-    then { snake with location = newHead :: withoutLastElement l ; hasPrize = false }
-    else { snake with location = newHead :: l }
+    then { snake with location = newHead :: l; hasPrize = false }
+    else { snake with location = newHead :: withoutLastElement l }
 
 let updatePrize (snake: Snake) =
     if snake.location.Head = snake.prize
@@ -72,10 +72,16 @@ let updatePrize (snake: Snake) =
     else snake
 
 let updateIsDead (snake: Snake) = 
-    match snake.location.Head with
-    | (x, _) when x < 0 || x >= fst snake.size -> { snake with isAlive = false }
-    | (_, y) when y < 0 || y >= snd snake.size -> { snake with isAlive = false }
-    | _ -> snake
+    let hasBorderCollision = match snake.location.Head with
+    | (x, _) when x < 0 || x >= fst snake.size -> true
+    | (_, y) when y < 0 || y >= snd snake.size -> true
+    | _ -> false
+
+    let hasSelfColision = Seq.compareWith Operators.compare (List.toSeq snake.location) (Seq.distinct snake.location) <> 0
+
+    if hasBorderCollision || hasSelfColision
+    then { snake with isAlive = false }
+    else snake
 
 
 let updateSnake (snake : Snake) (move: Move) =
@@ -86,29 +92,30 @@ let updateSnake (snake : Snake) (move: Move) =
     |> updateIsDead
     
 // UI
+let printLine (line: char list) =
+    line 
+    |> List.toArray 
+    |> (fun s -> String.Join("", s) ) 
+    |> Console.WriteLine
+
 let printSnake (snake: Snake) =
+    Console.Clear()
     let (width, height) = snake.size
-    for i = 0 to width do
-        let line = [
+    for i = 0 to width - 1 do
+        printLine [
             for j in 0 .. height - 1 ->
-                let c = (i, j)
-                if c = snake.prize then "*"
-                elif List.exists (fun e -> e = c) snake.location then "@"
-                else " "
+                let c = (j, i)
+                if c = snake.prize then '*'
+                elif snake.location |> List.exists (fun e -> e = c) then '@'
+                else '.'
         ]
-
-        line 
-        |> List.toArray 
-        |> (fun s -> String.Join("", s) ) 
-        |> Console.WriteLine
-
 
 let getMove (key: ConsoleKeyInfo) = 
     match key.KeyChar with
     | 'w' -> Up
     | 's' -> Down
     | 'a' -> Left
-    | 'r' -> Right
+    | 'd' -> Right
     | _ -> None
 
 [<EntryPoint>]
@@ -124,4 +131,6 @@ let main argv =
                  |> getMove 
                  |> updateSnake snake
 
+    Console.WriteLine "You lose!" 
+    Console.ReadKey false |> ignore
     0
