@@ -8,41 +8,63 @@ type Snake = {
     size: int * int
     prize: int * int
     location: (int * int) list
+    isDead: bool
 }
 
 type Move = 
+    | None
     | Up
     | Down
     | Left
     | Right
 
 // Create new snake
-let getPrizePosition (width, height) =
-    (random.Next(width), random.Next(height))
+let getRandomPosition (width, height) =
+    (random.Next width, random.Next height)
 
 let initSnake size = {
     direction = (0, 1)
     size = size
-    prize = getPrizePosition size
+    prize = getRandomPosition size
     location = [(fst size / 2, 0)]
+    isDead = false
 };
 
 // Update snake
 let getNewHead (snake: Snake) =
     let oldHead = snake.location.Head
-    (fst(oldHead) + fst(snake.direction), snd(oldHead) + snd(snake.direction))
+    (fst oldHead + fst snake.direction, snd oldHead + snd snake.direction)
 
-let updateDirection (snake: Snake) =
-    () // TODO: Implement
+let (|Horizontal|Vertical|) (direction: int * int) =
+    if snd direction = 0
+    then Horizontal
+    elif fst direction = 0
+    then Vertical
+    else failwith "Incorrect snake position"
+
+let updateDirection (move: Move) (snake: Snake) =
+    let newDirection = 
+        match (move, snake.direction) with
+        | (Up, Horizontal) -> (0, 1)
+        | (Down, Horizontal) -> (0, -1)
+        | (Left, Vertical) -> (-1, 0)
+        | (Right, Vertical) -> (-1, 0)
+        | _ -> snake.direction
+    { snake with direction = newDirection }
 
 let updatePrize (snake: Snake) =
-    () // TODO: Implement
+    if getNewHead snake = snake.prize
+    then { snake with prize = getRandomPosition snake.size }
+    else snake
 
 let updateLocation (snake: Snake) =
-    (); // TODO: Implement
+    () // TODO: Implement
 
-let updateSnake (snake : Snake) =
-    snake |> updateDirection |> updatePrize |> updateLocation
+let updateIsDead = 
+    () // TODO: Implement
+
+let updateSnake (snake : Snake) (move: Move) =
+    snake |> updateDirection move |> updatePrize |> updateLocation |> updateIsDead
     
 
 [<EntryPoint>]
