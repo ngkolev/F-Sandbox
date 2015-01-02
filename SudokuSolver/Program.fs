@@ -1,5 +1,4 @@
 ﻿open System
-open FSharp.Collections.ParallelSeq
 
 // Contants
 let SUB_MATRIX_SIZE = 3
