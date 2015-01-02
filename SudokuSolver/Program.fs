@@ -28,6 +28,7 @@ let checkSudoku (sudoku: int [,]) =
     [getSubMatrices; getRows; getColumns] 
     |> Seq.map (fun f -> f sudoku)
     |> Seq.concat
+    |> Seq.map (Seq.filter ((<>) 0))
     |> Seq.forall (fun r -> r |> Set.ofSeq |> Seq.length |> (=) (r |> Seq.length))
     
 // Find Sudoku solution
@@ -50,15 +51,16 @@ let matrixWithChange (sudoku: _[,]) i j x =
 
 let rec getSolution (sudoku: int[,]) =
     let (i, j) = getNextEmptyCell sudoku
+    let sudokoCheck = checkSudoku sudoku
 
-    if (i, j) <> (-1, -1) then 
+    if sudokoCheck && (i, j) <> (-1, -1) then 
         seq { for x in [1 .. 9] -> matrixWithChange sudoku i j x }
-        |> PSeq.map (fun y -> getSolution (array2D y))
+        |> Seq.map (fun y -> getSolution (array2D y)) 
         |> Seq.tryFind ((<>) NotSolvedSudoku)
         |> function 
             | Some x -> x
             | _ -> NotSolvedSudoku
-    elif checkSudoku sudoku then SolvedSudoku sudoku
+    elif sudokoCheck then SolvedSudoku sudoku
     else NotSolvedSudoku
     
 // Testing
