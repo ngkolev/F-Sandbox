@@ -54,10 +54,8 @@ let updateDirection (move: Move) (snake: Snake) =
         | _ -> snake.direction
     { snake with direction = newDirection }
 
-let rec withoutLastElement list =
-    match list with
-    | a :: b when b.Length > 0 -> a :: withoutLastElement b
-    | _ -> []
+let withoutLastElement (list:_ list) =
+    list |> Seq.take (list.Length - 1) |> Seq.toList
 
 let updateLocation (snake: Snake) =
     let l = snake.location
@@ -77,10 +75,8 @@ let updateIsDead (snake: Snake) =
     | (_, y) when y < 0 || y >= snd snake.size -> true
     | _ -> false
 
-    let listSeq = List.toSeq snake.location
-    let distSeq = Seq.distinct snake.location
-    let compResult = Seq.compareWith Operators.compare listSeq distSeq
-    let hasSelfColision= compResult <> 0
+    let set = snake.location |> Set.ofList
+    let hasSelfColision = snake.location.Length <> set.Count
 
     if hasBorderCollision || hasSelfColision
     then { snake with isAlive = false }
@@ -109,7 +105,7 @@ let printSnake (snake: Snake) =
             for j in 0 .. height - 1 ->
                 let c = (j, i)
                 if c = snake.prize then '*'
-                elif snake.location |> List.exists (fun e -> e = c) then '@'
+                elif snake.location |> List.exists ((=) c) then '@'
                 else '.'
         ]
 
