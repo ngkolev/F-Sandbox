@@ -1,4 +1,7 @@
-﻿// Contants
+﻿open System
+open FSharp.Collections.ParallelSeq
+
+// Contants
 let SUB_MATRIX_SIZE = 3
 let SUB_MATRIX_COUNT = 3
 let MATRIX_SIZE = SUB_MATRIX_SIZE * SUB_MATRIX_COUNT
@@ -41,24 +44,44 @@ type Sudoko =
     | NotSolvedSudoku
 
 let matrixWithChange (sudoku: _[,]) i j x =
-     seq { for i' in 0 .. SUB_MATRIX_COUNT - 1 -> 
-            seq { for j' in 0 .. SUB_MATRIX_COUNT - 1 ->
-                    if i' = i && j' = j  then x else sudoku.[i, j] }}
+     seq { for i' in 0 .. MATRIX_SIZE - 1 -> 
+            seq { for j' in 0 .. MATRIX_SIZE - 1 ->
+                    if i' = i && j' = j  then x else sudoku.[i', j'] }}
 
 let rec getSolution (sudoku: int[,]) =
     let (i, j) = getNextEmptyCell sudoku
 
     if (i, j) <> (-1, -1) then 
         seq { for x in [1 .. 9] -> matrixWithChange sudoku i j x }
-        |> Seq.map (fun y -> getSolution (array2D y))
+        |> PSeq.map (fun y -> getSolution (array2D y))
         |> Seq.tryFind ((<>) NotSolvedSudoku)
         |> function 
             | Some x -> x
             | _ -> NotSolvedSudoku
-    elif checkSudoku sudoku then SolvedSudoku(sudoku)
+    elif checkSudoku sudoku then SolvedSudoku sudoku
     else NotSolvedSudoku
     
-// Main entry point
+// Testing
+let example = array2D [[0;0;0;0;6;0;4;0;0];
+                       [0;5;0;0;0;3;6;0;0];
+                       [1;0;0;0;0;5;0;0;0];
+                       [0;4;1;0;0;0;0;0;0];
+                       [0;9;0;0;0;0;0;2;0];
+                       [5;0;2;0;0;0;3;4;0];
+                       [3;0;0;7;0;0;0;0;0];
+                       [0;0;6;5;0;0;0;9;0];
+                       [0;0;4;0;1;0;0;0;0]]
+
+let getSudokuString (sudoku: int[,]) =
+     seq { for i in 0 .. MATRIX_SIZE - 1 -> sudoku.[i, *]}
+        |> Seq.map (fun l -> String.Join(" ", l))
+        |> fun lines -> String.Join(Environment.NewLine, lines)
+
 [<EntryPoint>]
 let main argv = 
+    match getSolution example with
+        | SolvedSudoku s -> getSudokuString s
+        | _ -> "The provided sudoku has not solution"
+    |> Console.WriteLine
+    |> ignore
     0
